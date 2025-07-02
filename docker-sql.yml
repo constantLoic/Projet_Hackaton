@@ -1,0 +1,30 @@
+version: '3.8'
+ 
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-container
+    restart: always
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong@Passw0rd"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+ 
+  backend:
+    image: hackathon-backend
+    container_name: backend-container
+    depends_on:
+      - sqlserver
+    ports:
+      - "5000:8080"
+    environment:
+      ConnectionStrings_MyDbContext: "Server=sqlserver;Database=TeamDevDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true;"
+    restart: always
+ 
+volumes:
+  sqlserver-data:
+
