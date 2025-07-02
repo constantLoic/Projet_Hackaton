@@ -1,17 +1,22 @@
-# Build stage
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /app
+# Étape 1 : compilation avec le SDK
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+WORKDIR /src
 
-COPY *.sln .
-COPY PROJET_HACKATON/*.csproj ./PROJET_HACKATON/
-RUN dotnet restore
+# Copier la solution et le csproj
+COPY ["DevApi.sln", "DevApi.csproj", "./"]
 
+# Restaurer les dépendances
+RUN dotnet restore "DevApi.csproj"
+
+# Copier tout le reste et publier en Release
 COPY . .
-WORKDIR /app/PROJET_HACKATON
-RUN dotnet publish -c Release -o /out
+RUN dotnet publish "DevApi.csproj" -c Release -o /app/publish
 
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+# Étape 2 : image runtime légère
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS runtime
 WORKDIR /app
-COPY --from=build /out .
-ENTRYPOINT ["dotnet", "PROJET_HACKATON.dll"]
+
+# Récupérer les fichiers publiés
+COPY --from=build /app/publish .
+
+ENTRYPOINT ["dotnet", "DevApi.dll"]
