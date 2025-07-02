@@ -1,5 +1,5 @@
 # Étape 1 : compilation avec le SDK
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copier la solution et le csproj
@@ -13,7 +13,7 @@ COPY . .
 RUN dotnet publish "DevApi.csproj" -c Release -o /app/publish
 
 # Étape 2 : image runtime légère
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 
 # Récupérer les fichiers publiés
