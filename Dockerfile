@@ -19,4 +19,4 @@ WORKDIR /app
 # Récupérer les fichiers publiés
 COPY --from=build /app/publish .
 
-ENTRYPOINT ["dotnet", "bin/Debug/net9.0/DevApi.dll"]
+ENTRYPOINT ["dotnet", "DevApi.dll"]
