@@ -33,53 +33,59 @@ export default function Tasks() {
   };
 
   const handleAddTask = () => {
-  const { name, description, date, projetId, isDone } = newTask;
+    const { name, description, date, projetId, isDone } = newTask;
 
-  if (!name || !description || !date || !projetId) {
-    alert("Merci de remplir tous les champs obligatoires");
-    return;
-  }
+    if (!name || !description || !date || !projetId) {
+      alert("Merci de remplir tous les champs obligatoires");
+      return;
+    }
 
-  const isoDate = date.includes("T") ? date : date + "T00:00:00";
+    // On formate la date au format ISO attendu
+    const isoDate = date.includes("T") ? date : date + "T00:00:00";
 
-  axios
-    .post(
-      `${API_BASE_URL}/Tache`,
-      null,
-      {
-        params: {
-          name,
-          description,
-          date: isoDate,
-          projetId: Number(projetId),
-          isDone: isDone ? "true" : "false",
-        },
-      }
-    )
-    .then(() => {
-      fetchTasks();
-      setNewTask({
-        name: "",
-        description: "",
-        date: "",
-        projetId: "",
-        isDone: false,
-      });
-    })
-    .catch((error) => {
-      if (error.response && error.response.data) {
-        console.error("Erreur réponse API :", error.response.data);
-        if (error.response.data.errors) {
-          Object.entries(error.response.data.errors).forEach(([field, messages]) => {
-            console.error(`Erreur champ ${field}: ${messages.join(", ")}`);
-          });
+    const payload = {
+      name,
+      description,
+      date: isoDate,
+      projetId: Number(projetId),
+      isDone,
+    };
+
+    console.log("Payload envoyé :", payload);
+
+    axios
+      .post(`${API_BASE_URL}/Tache`, null, { params: payload }) // en query params si c’est ce que l’API attend
+      .then((res) => {
+        // si l’API renvoie la tâche créée en réponse
+        const createdTask = res.data;
+
+        // On ajoute directement la tâche créée au tableau local
+        setTasks((prev) => [...prev, createdTask]);
+
+        // On reset le formulaire
+        setNewTask({
+          name: "",
+          description: "",
+          date: "",
+          projetId: "",
+          isDone: false,
+        });
+      })
+      .catch((error) => {
+        if (error.response && error.response.data) {
+          console.error("Erreur réponse API :", error.response.data);
+          if (error.response.data.errors) {
+            Object.entries(error.response.data.errors).forEach(
+              ([field, messages]) => {
+                console.error(`Erreur champ ${field}: ${messages.join(", ")}`);
+              }
+            );
+          }
+        } else {
+          console.error("Erreur Axios :", error.message);
         }
-      } else {
-        console.error("Erreur Axios :", error.message);
-      }
-    });
-};
-
+      });
+  };
 
   return (
     <div className="p-6 max-w-md mx-auto">
