@@ -1,0 +1,46 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - frontend  # Change si ta branche frontend porte un autre nom
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker Image
+      run: |
+        docker build -t hackathon-frontend -f ./Dockerfile .
+    - name: Save Docker Image as tar
+      run: docker save hackathon-frontend -o frontend.tar.gz
+
+    - name: Copy image to remote server
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        source: "frontend.tar.gz"
+        target: "~/"
+
+    - name: Deploy to server via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        script: |
+          docker load < frontend.tar.gz
+          docker stop frontend-container || true
+          docker rm frontend-container || true
+          docker run -d --name frontend-container -p 3000:3000 --network bridge hackathon-frontend
