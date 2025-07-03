@@ -54,17 +54,15 @@ namespace DevApi
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
-
-            app.MapControllers();
-
             // global cors policy
             app.UseCors(x => x
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowAnyOrigin());
-            //.SetIsOriginAllowed(origin => true) // allow any origin 
-            //.AllowCredentials());
+
+            app.UseAuthorization();
+
+            app.MapControllers();
 
             app.Run();
         }
