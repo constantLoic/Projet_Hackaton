@@ -1,121 +1,154 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+const API_BASE_URL = "http://91.214.190.46:5000";
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState([
-    { id: 1, name: "Lire la doc API", completed: false },
-    { id: 2, name: "Faire la maquette", completed: true },
-  ]);
-  const [newTask, setNewTask] = useState("");
-  const [editingId, setEditingId] = useState(null);
-  const [editingText, setEditingText] = useState("");
+  const [tasks, setTasks] = useState([]);
+  const [newTask, setNewTask] = useState({
+    name: "",
+    description: "",
+    date: "",
+    projetId: "",
+    isDone: false,
+  });
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = () => {
+    axios
+      .get(`${API_BASE_URL}/Tache`)
+      .then((res) => setTasks(res.data))
+      .catch((err) => console.error("Erreur fetch tasks:", err));
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setNewTask((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
 
   const handleAddTask = () => {
-    if (!newTask.trim()) return;
-    const newEntry = {
-      id: Date.now(),
-      name: newTask,
-      completed: false,
-    };
-    setTasks([...tasks, newEntry]);
-    setNewTask("");
-  };
+  const { name, description, date, projetId, isDone } = newTask;
 
-  const handleDelete = (id) => {
-    setTasks(tasks.filter((task) => task.id !== id));
-  };
+  if (!name || !description || !date || !projetId) {
+    alert("Merci de remplir tous les champs obligatoires");
+    return;
+  }
 
-  const handleEdit = (task) => {
-    setEditingId(task.id);
-    setEditingText(task.name);
-  };
+  const isoDate = date.includes("T") ? date : date + "T00:00:00";
 
-  const handleSaveEdit = () => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === editingId ? { ...task, name: editingText } : task
-      )
-    );
-    setEditingId(null);
-    setEditingText("");
-  };
+  axios
+    .post(
+      `${API_BASE_URL}/Tache`,
+      null,
+      {
+        params: {
+          name,
+          description,
+          date: isoDate,
+          projetId: Number(projetId),
+          isDone: isDone ? "true" : "false",
+        },
+      }
+    )
+    .then(() => {
+      fetchTasks();
+      setNewTask({
+        name: "",
+        description: "",
+        date: "",
+        projetId: "",
+        isDone: false,
+      });
+    })
+    .catch((error) => {
+      if (error.response && error.response.data) {
+        console.error("Erreur réponse API :", error.response.data);
+        if (error.response.data.errors) {
+          Object.entries(error.response.data.errors).forEach(([field, messages]) => {
+            console.error(`Erreur champ ${field}: ${messages.join(", ")}`);
+          });
+        }
+      } else {
+        console.error("Erreur Axios :", error.message);
+      }
+    });
+};
 
-  const handleToggle = (id) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-md mx-auto">
       <h1 className="text-2xl font-bold mb-4">Tâches</h1>
-      <div className="mb-4 flex gap-2">
+
+      <div className="mb-6 flex flex-col gap-3">
         <input
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          className="border p-2 rounded w-full"
-          placeholder="Ajouter une nouvelle tâche"
+          name="name"
+          value={newTask.name}
+          onChange={handleChange}
+          placeholder="Nom de la tâche"
+          className="border p-2 rounded"
         />
+        <input
+          name="description"
+          value={newTask.description}
+          onChange={handleChange}
+          placeholder="Description"
+          className="border p-2 rounded"
+        />
+        <input
+          type="date"
+          name="date"
+          value={newTask.date}
+          onChange={handleChange}
+          className="border p-2 rounded"
+        />
+        <input
+          name="projetId"
+          value={newTask.projetId}
+          onChange={handleChange}
+          placeholder="ID du projet (nombre)"
+          type="number"
+          className="border p-2 rounded"
+        />
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            name="isDone"
+            checked={newTask.isDone}
+            onChange={handleChange}
+          />
+          Tâche terminée
+        </label>
+
         <button
           onClick={handleAddTask}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="bg-blue-600 text-white py-2 rounded"
         >
           Ajouter
         </button>
       </div>
 
-      <ul className="space-y-2">
+      <ul className="space-y-3">
         {tasks.map((task) => (
           <li
             key={task.id}
-            className="bg-white p-4 rounded shadow flex justify-between items-center"
+            className="p-4 border rounded shadow bg-white"
           >
-            {editingId === task.id ? (
-              <>
-                <input
-                  value={editingText}
-                  onChange={(e) => setEditingText(e.target.value)}
-                  className="border p-1 rounded w-full mr-2"
-                />
-                <button
-                  onClick={handleSaveEdit}
-                  className="bg-green-500 text-white px-3 py-1 rounded"
-                >
-                  Sauver
-                </button>
-              </>
-            ) : (
-              <>
-                <span
-                  className={`flex-1 ${
-                    task.completed ? "line-through text-gray-400" : ""
-                  }`}
-                >
-                  {task.name}
-                </span>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleToggle(task.id)}
-                    className="text-blue-500 text-sm"
-                  >
-                    {task.completed ? "↩️" : "✔️"}
-                  </button>
-                  <button
-                    onClick={() => handleEdit(task)}
-                    className="text-yellow-500 text-sm"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    onClick={() => handleDelete(task.id)}
-                    className="text-red-500 text-sm"
-                  >
-                    ❌
-                  </button>
-                </div>
-              </>
-            )}
+            <h3 className={task.isDone ? "line-through" : ""}>{task.name}</h3>
+            <p>{task.description}</p>
+            <p>
+              Date :{" "}
+              {task.date
+                ? new Date(task.date).toLocaleDateString("fr-FR")
+                : "N/A"}
+            </p>
+            <p>Projet ID : {task.projetId}</p>
+            <p>Status : {task.isDone ? "Terminée" : "En cours"}</p>
           </li>
         ))}
       </ul>
