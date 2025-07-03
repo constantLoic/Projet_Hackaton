@@ -4,14 +4,14 @@ import Login from "./pages/login";
 import Dashboard from "./pages/dashboard";
 import Projects from "./components/projects";
 import Tasks from "./components/tasks";
-import Kanban from "./pages/Kanban";
+import Kanban from "./pages/kanban";
 import Layout from "./layout";
 
 export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/pages" element={<Login />} />
+        <Route path="/" element={<Login />} />
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/projects" element={<Projects />} />
