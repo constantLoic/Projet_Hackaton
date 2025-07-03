@@ -1,11 +1,11 @@
 // src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
+import Login from "./pages/login";
+import Dashboard from "./pages/dashboard";
 import Projects from "./components/projects";
 import Tasks from "./components/tasks";
 import Kanban from "./pages/Kanban";
-import Layout from "./Layout";
+import Layout from "./layout";
 
 export default function App() {
   return (
