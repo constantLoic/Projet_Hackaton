@@ -43,4 +43,4 @@ jobs:
           docker load < frontend.tar.gz
           docker stop frontend-container || true
           docker rm frontend-container || true
-          docker run -d --name frontend-container -p 3000:3000 --network bridge hackathon-frontend
+          docker run -d --name frontend-container -p 3000:80 --network bridge hackathon-frontend
