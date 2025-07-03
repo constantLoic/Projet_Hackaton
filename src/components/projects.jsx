@@ -1,120 +1,91 @@
-import { useEffect, useState } from "react";
-//import api from "../api";
-import Notification from "../pages/notifications.jsx";
+// src/pages/Projects.jsx
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Projects() {
-  const [projects, setProjects] = useState([]);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [notif, setNotif] = useState({ message: "", type: "" });
-  const [loading, setLoading] = useState(false);
+  const [projects, setProjects] = useState([
+    {
+      id: 1,
+      title: "Développement d'un Chatbot étudiant",
+      description: "Chatbot pour répondre aux questions fréquentes des étudiants.",
+      deadline: "2025-07-15"
+    },
+    {
+      id: 2,
+      title: "Application de gestion de cours",
+      description: "App permettant aux profs et étudiants de gérer les cours et supports.",
+      deadline: "2025-07-20"
+    },
+    {
+      id: 3,
+      title: "Système de notation en ligne",
+      description: "Système sécurisé pour noter les devoirs et examens.",
+      deadline: "2025-08-01"
+    }
+  ]);
 
-  const showNotif = (message, type = "success") => {
-    setNotif({ message, type });
-    setTimeout(() => setNotif({ message: "", type: "" }), 3000);
+  const [newProject, setNewProject] = useState({ title: '', description: '', deadline: '' });
+
+  const handleChange = (e) => {
+    setNewProject({ ...newProject, [e.target.name]: e.target.value });
   };
 
-  const fetchProjects = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/Projet");
-      setProjects(res.data);
-    } catch (e) {
-      showNotif("Erreur chargement projets", "error");
-    }
-    setLoading(false);
+  const handleAdd = () => {
+    if (!newProject.title || !newProject.description || !newProject.deadline) return;
+    const id = projects.length + 1;
+    setProjects([...projects, { id, ...newProject }]);
+    setNewProject({ title: '', description: '', deadline: '' });
   };
 
-  const handleAddProject = async (e) => {
-    e.preventDefault();
-    if (!name || !description) {
-      alert("Nom et description obligatoires !");
-      return;
-    }
-    try {
-      await api.post("/Projet", { name, description });
-      setName("");
-      setDescription("");
-      showNotif("Projet ajouté avec succès");
-      fetchProjects();
-    } catch (e) {
-      showNotif("Échec de l'ajout.", "error");
-    }
+  const handleDelete = (id) => {
+    setProjects(projects.filter(project => project.id !== id));
   };
 
-  const handleDeleteProject = async (id) => {
-    if (!window.confirm("Confirmer la suppression ?")) return;
-    try {
-      await api.delete(`/Projet/${id}`);
-      showNotif("Projet supprimé");
-      fetchProjects();
-    } catch (e) {
-      showNotif("Échec de la suppression.", "error");
-    }
+  const handleEdit = (id, field, value) => {
+    const updated = projects.map(p => p.id === id ? { ...p, [field]: value } : p);
+    setProjects(updated);
   };
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-4xl font-bold mb-8 text-center">Gestion des Projets</h2>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Projets Universitaires en Informatique</h1>
 
-      <Notification
-        message={notif.message}
-        type={notif.type}
-        onClose={() => setNotif({ message: "", type: "" })}
-      />
+      <div className="bg-gray-100 p-4 rounded mb-6">
+        <input name="title" placeholder="Titre" value={newProject.title} onChange={handleChange} className="mr-2 p-1" />
+        <input name="description" placeholder="Description" value={newProject.description} onChange={handleChange} className="mr-2 p-1" />
+        <input name="deadline" type="date" value={newProject.deadline} onChange={handleChange} className="mr-2 p-1" />
+        <button onClick={handleAdd} className="bg-blue-500 text-white px-3 py-1 rounded">Ajouter</button>
+      </div>
 
-      <form onSubmit={handleAddProject} className="bg-white shadow-md rounded p-6 mb-8">
-        <h3 className="text-2xl font-semibold mb-4">Ajouter un projet</h3>
-        <input
-          type="text"
-          placeholder="Nom du projet"
-          className="w-full border border-gray-300 rounded p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <textarea
-          placeholder="Description du projet"
-          className="w-full border border-gray-300 rounded p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded transition"
-        >
-          Ajouter
-        </button>
-      </form>
-
-      {loading ? (
-        <p className="text-center text-gray-500">Chargement...</p>
-      ) : projects.length === 0 ? (
-        <p className="text-center text-gray-500">Aucun projet trouvé.</p>
-      ) : (
-        <ul className="space-y-6">
-          {projects.map(({ id, name, description }) => (
-            <li
-              key={id}
-              className="bg-white shadow-md rounded p-6 flex justify-between items-center"
+      <div className="grid md:grid-cols-3 gap-6">
+        {projects.map(project => (
+          <div key={project.id} className="border rounded-xl shadow p-4 bg-white">
+            <input
+              value={project.title}
+              onChange={(e) => handleEdit(project.id, 'title', e.target.value)}
+              className="text-xl font-semibold w-full mb-1"
+            />
+            <textarea
+              value={project.description}
+              onChange={(e) => handleEdit(project.id, 'description', e.target.value)}
+              className="text-sm text-gray-600 w-full mb-1"
+            />
+            <input
+              type="date"
+              value={project.deadline}
+              onChange={(e) => handleEdit(project.id, 'deadline', e.target.value)}
+              className="text-xs text-gray-500 mb-2"
+            />
+            <Link
+              to={`/project/${project.id}`}
+              className="mt-1 inline-block text-blue-500 hover:underline text-sm"
             >
-              <div>
-                <h4 className="text-2xl font-semibold">{name}</h4>
-                <p className="mt-2 text-gray-700">{description}</p>
-              </div>
-              <button
-                onClick={() => handleDeleteProject(id)}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition"
-              >
-                Supprimer
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+              Voir le projet
+            </Link>
+            <button onClick={() => handleDelete(project.id)} className="text-red-500 ml-4 text-sm">Supprimer</button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

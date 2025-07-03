@@ -1,21 +1,33 @@
-import React from "react";
+// src/pages/Dashboard.jsx
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 export default function Dashboard() {
+  const [projects, setProjects] = useState([]);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await axios.get('http://91.214.190.46:5000/api/projects');
+        setProjects(response.data);
+      } catch (error) {
+        console.error('Erreur de chargement des projets:', error);
+      }
+    };
+    fetchProjects();
+  }, []);
+
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-r from-indigo-100 via-white to-indigo-100">
-      <h1 className="text-4xl font-extrabold text-center text-indigo-700 mb-10">
-        Tableau de bord
-      </h1>
-      <div className="flex justify-center mb-12">
-        <img
-          className="w-80 h-auto rounded-lg shadow-lg"
-          src="data:image/png;base64,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"
-          alt="Dashboard"
-        />
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Tableau de Bord</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {projects.map((proj) => (
+          <Link key={proj.id} to={`/project/${proj.id}`} className="p-4 shadow rounded-lg bg-white hover:bg-gray-50">
+            <h2 className="text-xl font-semibold">{proj.title}</h2>
+          </Link>
+        ))}
       </div>
-      <p className="text-center text-gray-700 max-w-xl mx-auto">
-        Bienvenue sur le portail interne Satom IT Learning. Ici vous pouvez suivre vos projets, collaborateurs et plus.
-      </p>
     </div>
   );
 }

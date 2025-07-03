@@ -1,159 +1,124 @@
-import { useEffect, useState } from "react";
-//import api from "../api";
-import Notification from "../pages/notifications.jsx";
+import React, { useState } from "react";
 
 export default function Tasks() {
-  const [tasks, setTasks] = useState([]);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
-  const [projectId, setProjectId] = useState(null);
-  const [projects, setProjects] = useState([]);
-  const [notif, setNotif] = useState({ message: "", type: "" });
-  const [loading, setLoading] = useState(false);
+  const [tasks, setTasks] = useState([
+    { id: 1, name: "Lire la doc API", completed: false },
+    { id: 2, name: "Faire la maquette", completed: true },
+  ]);
+  const [newTask, setNewTask] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editingText, setEditingText] = useState("");
 
-  const showNotif = (message, type = "success") => {
-    setNotif({ message, type });
-    setTimeout(() => setNotif({ message: "", type: "" }), 3000);
+  const handleAddTask = () => {
+    if (!newTask.trim()) return;
+    const newEntry = {
+      id: Date.now(),
+      name: newTask,
+      completed: false,
+    };
+    setTasks([...tasks, newEntry]);
+    setNewTask("");
   };
 
-  const fetchTasks = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/Tache");
-      setTasks(res.data);
-    } catch (e) {
-      showNotif("Erreur chargement tâches", "error");
-    }
-    setLoading(false);
+  const handleDelete = (id) => {
+    setTasks(tasks.filter((task) => task.id !== id));
   };
 
-  const fetchProjects = async () => {
-    try {
-      const res = await api.get("/Projet");
-      setProjects(res.data);
-    } catch (e) {
-      showNotif("Erreur chargement projets", "error");
-    }
+  const handleEdit = (task) => {
+    setEditingId(task.id);
+    setEditingText(task.name);
   };
 
-  useEffect(() => {
-    fetchTasks();
-    fetchProjects();
-  }, []);
-
-  const handleAddTask = async (e) => {
-    e.preventDefault();
-    if (!name || !description || !date || !projectId) {
-      alert("Tous les champs sont obligatoires !");
-      return;
-    }
-    try {
-      await api.post(
-        `/Tache?name=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}&date=${encodeURIComponent(date)}&projetId=${projectId}`
-      );
-      setName("");
-      setDescription("");
-      setDate("");
-      setProjectId(null);
-      showNotif("Tâche ajoutée avec succès");
-      fetchTasks();
-    } catch (e) {
-      showNotif("Échec de l'ajout.", "error");
-    }
+  const handleSaveEdit = () => {
+    setTasks(
+      tasks.map((task) =>
+        task.id === editingId ? { ...task, name: editingText } : task
+      )
+    );
+    setEditingId(null);
+    setEditingText("");
   };
 
-  const handleDeleteTask = async (id) => {
-    if (!window.confirm("Confirmer la suppression ?")) return;
-    try {
-      await api.delete(`/Tache/id?id=${id}`);
-      showNotif("Tâche supprimée");
-      fetchTasks();
-    } catch (e) {
-      showNotif("Échec de la suppression.", "error");
-    }
+  const handleToggle = (id) => {
+    setTasks(
+      tasks.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task
+      )
+    );
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-4xl font-bold mb-8 text-center">Gestion des Tâches</h2>
-
-      <Notification
-        message={notif.message}
-        type={notif.type}
-        onClose={() => setNotif({ message: "", type: "" })}
-      />
-
-      <form onSubmit={handleAddTask} className="bg-white shadow-md rounded p-6 mb-8">
-        <h3 className="text-2xl font-semibold mb-4">Ajouter une tâche</h3>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Tâches</h1>
+      <div className="mb-4 flex gap-2">
         <input
-          type="text"
-          placeholder="Nom de la tâche"
-          className="w-full border border-gray-300 rounded p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          className="border p-2 rounded w-full"
+          placeholder="Ajouter une nouvelle tâche"
         />
-        <textarea
-          placeholder="Description de la tâche"
-          className="w-full border border-gray-300 rounded p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <input
-          type="date"
-          className="w-full border border-gray-300 rounded p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-        <select
-          className="w-full border border-gray-300 rounded p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={projectId || ""}
-          onChange={(e) => setProjectId(e.target.value)}
-        >
-          <option value="" disabled>
-            Sélectionner un projet
-          </option>
-          {projects.map(({ id, name }) => (
-            <option key={id} value={id}>
-              {name}
-            </option>
-          ))}
-        </select>
         <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded transition"
+          onClick={handleAddTask}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
         >
           Ajouter
         </button>
-      </form>
+      </div>
 
-      {loading ? (
-        <p className="text-center text-gray-500">Chargement...</p>
-      ) : tasks.length === 0 ? (
-        <p className="text-center text-gray-500">Aucune tâche trouvée.</p>
-      ) : (
-        <ul className="space-y-6">
-          {tasks.map(({ id, name, description, date, projetId }) => (
-            <li
-              key={id}
-              className="bg-white shadow-md rounded p-6 flex justify-between items-center"
-            >
-              <div>
-                <h4 className="text-xl font-semibold">{name}</h4>
-                <p className="mt-1 text-gray-700">{description}</p>
-                <p className="mt-1 text-gray-500 text-sm">Deadline: {date}</p>
-                <p className="mt-1 text-gray-500 text-sm">Projet ID: {projetId}</p>
-              </div>
-              <button
-                onClick={() => handleDeleteTask(id)}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition"
-              >
-                Supprimer
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className="space-y-2">
+        {tasks.map((task) => (
+          <li
+            key={task.id}
+            className="bg-white p-4 rounded shadow flex justify-between items-center"
+          >
+            {editingId === task.id ? (
+              <>
+                <input
+                  value={editingText}
+                  onChange={(e) => setEditingText(e.target.value)}
+                  className="border p-1 rounded w-full mr-2"
+                />
+                <button
+                  onClick={handleSaveEdit}
+                  className="bg-green-500 text-white px-3 py-1 rounded"
+                >
+                  Sauver
+                </button>
+              </>
+            ) : (
+              <>
+                <span
+                  className={`flex-1 ${
+                    task.completed ? "line-through text-gray-400" : ""
+                  }`}
+                >
+                  {task.name}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleToggle(task.id)}
+                    className="text-blue-500 text-sm"
+                  >
+                    {task.completed ? "↩️" : "✔️"}
+                  </button>
+                  <button
+                    onClick={() => handleEdit(task)}
+                    className="text-yellow-500 text-sm"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => handleDelete(task.id)}
+                    className="text-red-500 text-sm"
+                  >
+                    ❌
+                  </button>
+                </div>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
